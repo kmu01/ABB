@@ -4,8 +4,10 @@ typedef struct abb abb_t;
 
 typedef int (*abb_comparar_clave_t) (const char *, const char *);
 typedef void (*abb_destruir_dato_t) (void *);
+
 //Crea y devuelve un abb, o NULL si algo salió mal.
 abb_t* abb_crear(abb_comparar_clave_t cmp, abb_destruir_dato_t destruir_dato);
+
 //Guarda una clave junto con su dato en el abb.
 //Pre: el abb existe.
 //Pos: se devuelve true si se pudo guardar o false si no se pudo.
@@ -32,7 +34,7 @@ size_t abb_cantidad(abb_t *arbol);
 //Destruye el arbol y aplica la función destruir dato.
 void abb_destruir(abb_t *arbol);
 
-
+//Iterador interno del ABB.
 void abb_in_order(abb_t *arbol, bool visitar(const char *, void *, void *), void *extra);
 
 typedef struct abb_iter abb_iter_t;
