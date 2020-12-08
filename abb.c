@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include <stddef.h>
+
 
 typedef struct nodo_abb{
     struct nodo_abb* izq;
@@ -44,7 +44,7 @@ static nodo_abb_t* nodo_buscar(const abb_t* arbol,nodo_abb_t* act,nodo_abb_t* an
 static bool _ag(abb_t* arbol,nodo_abb_t* act,nodo_abb_t* nuevo);
 
 //Wrapper del iterador intero.
-static void _abbinorder(abb_t *arbol, bool visitar(const char *, void *, void *), void *extra, nodo_abb_t* act, bool iterar);
+static void _abbinorder(const abb_t *arbol, bool visitar(const char *, void *, void *), void *extra, nodo_abb_t* act, bool iterar);
 
 //Apila el nodo pasado por parámetro junto con su rama izquierda.
 static void iter_apilar_elementos(pila_t* pila,nodo_abb_t* nodo);
@@ -107,7 +107,7 @@ void *abb_borrar(abb_t *arbol, const char *clave){
             ant->der = NULL;
         }
         else if(n == arbol->raiz){
-            arbol->raiz == NULL;
+            arbol->raiz = NULL;
         }
         nodo_abb_destruir(n);
         arbol->cant--;
@@ -254,7 +254,7 @@ static bool _ag(abb_t* arbol,nodo_abb_t* act,nodo_abb_t* nuevo){
  La iteración in-order lee elementos a la izquierda, luego el padre o "centro" 
  y finalmente la derecha.  
 */
-static void _abbinorder(const abb_t *arbol, bool visitar(const char *clave, void * dato, void *extra), void *extra, nodo_abb_t* act, bool iterar){
+static void _abbinorder(const abb_t *arbol, bool visitar(const char *, void *, void *), void *extra, nodo_abb_t* act, bool iterar){
     if(!act || !iterar) return;
     // Llamo a _abbinorder con el hijo izquierdo del actual 
     //    antes de llamar a visitar para cumplir con el recorrido in-order.
