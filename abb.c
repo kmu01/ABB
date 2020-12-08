@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <stddef.h>
 
 typedef struct nodo_abb{
     struct nodo_abb* izq;
@@ -20,7 +21,7 @@ struct abb{
 };
 
 struct abb_iter{
-    abb_t* arbol;
+    const abb_t* arbol;
     pila_t* nodos;
 };
 
@@ -28,7 +29,7 @@ struct abb_iter{
 /*    DECLARACIONES DE AUXILIARES    */
 
 //Crea un nodo de ABB.
-static nodo_abb_t* nodo_abb_crear(char* clave, void* dato);
+static nodo_abb_t* nodo_abb_crear(const char* clave, void* dato);
 
 //Destruye un nodo de ABB.
 static void nodo_abb_destruir(nodo_abb_t* nodo);
@@ -37,13 +38,13 @@ static void nodo_abb_destruir(nodo_abb_t* nodo);
 static void _abbd(abb_t* arbol, nodo_abb_t* act);
 
 //Busca un nodo dentro del arbol utilizando su clave.
-static nodo_abb_t* nodo_buscar(abb_t* arbol,nodo_abb_t* act,nodo_abb_t* ant,char* clave);
+static nodo_abb_t* nodo_buscar(const abb_t* arbol,nodo_abb_t* act,nodo_abb_t* ant,const char* clave);
 
 //Guarda elementos en el arbol.
 static bool _ag(abb_t* arbol,nodo_abb_t* act,nodo_abb_t* nuevo);
 
 //Wrapper del iterador intero.
-static void _abbinorder(abb_t *arbol, bool visitar(const char *, void *, void *), void *extra,nodo_abb_t* act,bool iterar);
+static void _abbinorder(abb_t *arbol, bool visitar(const char *, void *, void *), void *extra, nodo_abb_t* act, bool iterar);
 
 //Apila el nodo pasado por parámetro junto con su rama izquierda.
 static void iter_apilar_elementos(pila_t* pila,nodo_abb_t* nodo);
@@ -52,7 +53,7 @@ static void iter_apilar_elementos(pila_t* pila,nodo_abb_t* nodo);
 static void* borrar_un_hijo(nodo_abb_t* padre,nodo_abb_t* abuelo);
 
 //Reorganiza el arbol al borrar un elemento con 2 hijos.
-static void* borrar_dos_hijos(abb_t* arbol,nodo_abb_t* padre,nodo_abb_t* abuelo);
+static void* borrar_dos_hijos(abb_t* arbol,nodo_abb_t* padre);
 
 //Busca un reemplazo para el nodo a borrar.
 static nodo_abb_t* buscar_reemplazo(abb_t* arbol,nodo_abb_t* nodo);
@@ -79,7 +80,7 @@ bool abb_guardar(abb_t *arbol, const char *clave, void *dato){
         arbol->cant++;
         return true;
     }
-    nodo_abb_t* n = nodo_buscar(arbol,arbol->raiz,NULL,NULL,clave);
+    nodo_abb_t* n = nodo_buscar(arbol,arbol->raiz,NULL,clave);
     if(n){
         if(arbol->destruir_dato){
             arbol->destruir_dato(n->dato);
@@ -96,6 +97,7 @@ void *abb_borrar(abb_t *arbol, const char *clave){
     nodo_abb_t* ant = NULL;
     nodo_abb_t* n = nodo_buscar(arbol,arbol->raiz,ant,clave);
     if(!n) return NULL;
+    arbol->cant--;
     if(!n->der && !n->izq){ //Caso sin hijos.
         void* dato = n->dato;
         if(ant && arbol->cmp(clave,ant->clave) < 0){
@@ -161,13 +163,15 @@ abb_iter_t *abb_iter_in_crear(const abb_t *arbol){
 bool abb_iter_in_avanzar(abb_iter_t *iter){
     if(abb_iter_in_al_final(iter)) return false;
     //Desapilo el tope y apilo su elemento derecho.
-    iter_apilar_elementos(iter->nodos,(nodo_abb_t*)pila_desapilar(iter->nodos)->der);
+    nodo_abb_t* nodo = pila_desapilar(iter->nodos);
+    iter_apilar_elementos(iter->nodos,nodo->der);
     return true;
 }
 
 const char *abb_iter_in_ver_actual(const abb_iter_t *iter){
     if(pila_esta_vacia(iter->nodos)) return NULL;
-    return (nodo_abb_t*)pila_ver_tope(iter->nodos)->clave;
+    nodo_abb_t* nodo = pila_ver_tope(iter->nodos);
+    return nodo->clave;
 }
 
 bool abb_iter_in_al_final(const abb_iter_t *iter){
@@ -181,7 +185,7 @@ void abb_iter_in_destruir(abb_iter_t* iter){
 
 /*    AUXILIARES    */
 
-static nodo_abb_t* nodo_abb_crear(char* clave, void* dato){
+static nodo_abb_t* nodo_abb_crear(const char* clave, void* dato){
     nodo_abb_t* n = malloc(sizeof(nodo_abb_t));
     if(!n) return NULL;
     n->clave = strdup(clave);
@@ -214,7 +218,7 @@ static void _abbd(abb_t* arbol, nodo_abb_t* act){
     return;
 }
 
-static nodo_abb_t* nodo_buscar(abb_t* arbol,nodo_abb_t* act,nodo_abb_t* ant,char* clave){
+static nodo_abb_t* nodo_buscar(const abb_t* arbol,nodo_abb_t* act,nodo_abb_t* ant,const char* clave){
     if(!act) return NULL; //Caso base, no se encuentra el nodo.
     size_t comparacion = arbol->cmp(clave,act->clave);
     if(comparacion == 0) return act; //Si la comparación da 0, encontré el nodo.
@@ -228,14 +232,14 @@ static nodo_abb_t* nodo_buscar(abb_t* arbol,nodo_abb_t* act,nodo_abb_t* ant,char
     return nodo_buscar(arbol,act,ant,clave);   
 }
 static bool _ag(abb_t* arbol,nodo_abb_t* act,nodo_abb_t* nuevo){
-    size_t comp = arbol->cmp(n->clave,act->clave);
+    size_t comp = arbol->cmp(nuevo->clave,act->clave);
     if(comp < 0){
         if(!act->izq){
             act->izq = nuevo;
             arbol->cant++;
             return true;
         }
-        return _ag(arbol,act->izq,nuevo)
+        return _ag(arbol,act->izq,nuevo);
     }
     if(!act->der){
         act->der = nuevo;
@@ -250,18 +254,15 @@ static bool _ag(abb_t* arbol,nodo_abb_t* act,nodo_abb_t* nuevo){
  La iteración in-order lee elementos a la izquierda, luego el padre o "centro" 
  y finalmente la derecha.  
 */
-static void _abbinorder(abb_t *arbol, bool visitar(const char *, void *, void *), void *extra,nodo_abb_t* act,bool iterar){
+static void _abbinorder(const abb_t *arbol, bool visitar(const char *clave, void * dato, void *extra), void *extra, nodo_abb_t* act, bool iterar){
     if(!act || !iterar) return;
-
-    /* Llamo a _abbinorder con el hijo izquierdo del actual 
-        antes de llamar a visitar para cumplir con el recorrido in-order.
-    */
-
-    _abbinorder(abb_t* arbol,visitar,extra,act->izq,iterar);
+    // Llamo a _abbinorder con el hijo izquierdo del actual 
+    //    antes de llamar a visitar para cumplir con el recorrido in-order.
+    _abbinorder(arbol,visitar,extra,act->izq,iterar);
     if(!act || !visitar(act->clave,act->dato,extra)){
         iterar = false;
     }
-    _abbinorder(abb_t* arbol,visitar,extra,act->der,iterar);
+    _abbinorder(arbol,visitar,extra,act->der,iterar);
 }
 
 static void iter_apilar_elementos(pila_t* pila,nodo_abb_t* nodo){
