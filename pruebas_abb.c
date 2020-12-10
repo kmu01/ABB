@@ -48,7 +48,7 @@ static void prueba_abb_insertar(){
     print_test("Prueba ABB pertenece clave1, es true", abb_pertenece(abb, clave1));
     print_test("Prueba ABB borrar clave1, es valor1", abb_borrar(abb, clave1) == valor1);
     print_test("Prueba ABB la cantidad de elementos es 0", abb_cantidad(abb) == 0);
-
+    
     /* Inserta otros 2 valores y no los borra (se destruyen con el abb) */
     print_test("Prueba ABB insertar clave2", abb_guardar(abb, clave2, valor2));
     print_test("Prueba ABB la cantidad de elementos es 1", abb_cantidad(abb) == 1);
@@ -148,6 +148,7 @@ static void prueba_abb_borrar(){
     print_test("Prueba ABB la cantidad de elementos es 0", abb_cantidad(abb) == 0);
 
     abb_destruir(abb);
+    
 }
 
 static void prueba_abb_clave_vacia(){
@@ -346,14 +347,14 @@ void pruebas_abb_alumno(){
     printf("\n-----INSERTAR CLAVE VACÍA Y DATO NULO-----\n");
     prueba_abb_valor_null();
 
-    printf("\n-----PRUEBA DE VOLUMEN----\n");
-    prueba_abb_volumen(5000);
-
     printf("\n-----ITERADOR INTERNO DE ABB-----\n");
     prueba_abb_iter_interno();
 
     printf("\n-----ITERADOR EXTERNO DE ABB-----\n");
     prueba_abb_iter_externo();
+
+    printf("\n-----PRUEBA DE VOLUMEN----\n");
+    prueba_abb_volumen(5000);
 
     printf("\n-----PRUEBA DE VOLUMEN CON ITERADOR EXTERNO-----\n");
     prueba_abb_iter_volumen(5000);

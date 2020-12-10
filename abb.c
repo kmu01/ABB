@@ -98,17 +98,15 @@ bool abb_guardar(abb_t *arbol, const char *clave, void *dato){
 void *abb_borrar(abb_t *arbol, const char *clave){
     nodo_abb_t* padre = NULL;
     nodo_abb_t* nodo = nodo_buscar(arbol,arbol->raiz,padre,clave);
-    if(!nodo) return NULL;
+    if(!nodo) return NULL; 
     if(!nodo->der && !nodo->izq){ //Caso sin hijos.
         void* dato = nodo->dato;
-        if(padre && arbol->cmp(clave,padre->clave) < 0){
-            padre->izq = NULL;
-        }
-        else if(padre && arbol->cmp(clave,padre->clave) > 0){
-            padre->der = NULL;
-        }
-        else if(nodo == arbol->raiz){
+        if (!padre) {
             arbol->raiz = NULL;
+        } else if (padre->der && arbol->cmp(padre->der->clave, nodo->clave) == 0) {
+            padre->der = NULL;
+        } else if (padre->izq && arbol->cmp(padre->izq->clave, nodo->clave) == 0) {
+            padre->izq = NULL;
         }
         nodo_abb_destruir(nodo);
         arbol->cant--;
@@ -207,12 +205,11 @@ free(nodo);
 }
 
 static void _abbd(abb_t* arbol, nodo_abb_t* act){
-    if(act->izq){
-        return _abbd(arbol,act->izq);
+    if (!act){
+        return;
     }
-    if(act->der){
-        return _abbd(arbol,act->der);
-    }
+    _abbd(arbol,act->izq);
+    _abbd(arbol,act->der);
     if(arbol->destruir_dato){
         arbol->destruir_dato(act->dato);
     }
@@ -222,13 +219,16 @@ static void _abbd(abb_t* arbol, nodo_abb_t* act){
 
 static nodo_abb_t* nodo_buscar(const abb_t* arbol,nodo_abb_t* act,nodo_abb_t* padre,const char* clave){
     if(!act) return NULL; //Caso base, no se encuentra el nodo.
-    size_t comparacion = arbol->cmp(clave,act->clave);
+    size_t comparacion = arbol->cmp(clave, act->clave);
     if(comparacion == 0) return act; //Si la comparación da 0, encontré el nodo.
     if (padre) padre = act;
     if(comparacion < 0){
         return nodo_buscar(arbol,act->izq,padre,clave);
     }
-    return nodo_buscar(arbol,act->der,padre,clave);   
+    if(comparacion > 0){
+        return nodo_buscar(arbol,act->der,padre,clave);
+    }
+    return NULL;   
 }
 
 static bool _ag(abb_t* arbol,nodo_abb_t* act,nodo_abb_t* nuevo){
