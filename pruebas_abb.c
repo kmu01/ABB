@@ -20,9 +20,10 @@ static void pruebas_abb_vacio(void){
     print_test("La cantidad es 0", abb_cantidad(arbol)==0);
     print_test ("Obtener dato es NULL" , abb_obtener(arbol,clave_falsa) == NULL);
     print_test ("Borrar clave no existente es NULL" , abb_borrar (arbol , clave_falsa) == NULL);
-    print_test ("Pertenece clave no existente es flase" , !abb_pertenece (arbol , clave_falsa));
-
-
+    print_test ("Pertenece clave no existente es false" , !abb_pertenece (arbol , clave_falsa));
+    int extra = 0;
+    abb_in_order(arbol , sumar_primeros_elementos , &extra);
+    print_test ("Intento recorrer con iter interno" , true);
     /* Destruyo el arbol*/
     abb_destruir(arbol);
     print_test("El arbol fue destruido", true);
@@ -424,6 +425,83 @@ bool sumar_elementos (const char* clave , void* dato , void* extra){
     return true;
 }
 
+// Crea claves aleatorias de un largo de 10.
+static void generar_claves(char** claves, size_t n){
+    for (size_t i = 0; i < n; i++){
+        claves[i] = malloc(sizeof(char)*10);
+        sprintf(claves[i], "%ld", rand() % n);
+    }
+}
+
+static void prueba_abb_volumen(size_t largo){
+    printf ("\nINICIO DE PRUEBAS DE VOLUMEN\n");
+    abb_t* abb = abb_crear(strcmp, NULL);
+    // Se crea un arreglo de claves generadas aleatoriamiente.
+    // Asi se mantiene log(n) y es basicamente una lista.
+    char** claves = malloc(largo * sizeof(char*));
+    generar_claves(claves, largo);
+    bool todo_bien = true;
+    for(size_t i = 0; i < largo; i++){
+        if(!abb_guardar(abb, claves[i], claves[i])){
+            todo_bien = false;
+        }
+    }
+    print_test("Prueba ABB se insertaron correctamente", todo_bien);
+    todo_bien = true;
+    for(size_t i = 0; i < largo; i++){
+        if(abb_pertenece(abb, claves[i]) && strcmp(claves[i], abb_borrar(abb, claves[i]))){
+            todo_bien = false;
+            free(claves[i]);
+        }
+    }
+    print_test("Prueba ABB se borraron correctamente", todo_bien);
+    for(size_t i = 0; i < largo; i++){
+        free(claves[i]);
+    }
+    free(claves);
+    abb_destruir(abb);
+}
+
+static void prueba_abb_iter_volumen(size_t largo){
+    printf ("\nINICIO DE PRUEBAS DE VOLUMEN CON ITERADOR\n");
+    abb_t* abb = abb_crear(strcmp, NULL);
+    char** claves = malloc(largo * sizeof(char*));
+    generar_claves(claves, largo);
+    bool todo_bien = true;
+    for(size_t i = 0; i < largo; i++){
+        if(!abb_guardar(abb, claves[i], claves[i])){
+            todo_bien = false;
+        }
+    }
+    print_test("Prueba ABB se insertaron correctamente", todo_bien);
+    abb_iter_t* iter = abb_iter_in_crear(abb);
+    char* clave;
+    char* valor;
+    todo_bien = true;
+    for(size_t i = 0; i < largo && !abb_iter_in_al_final(iter); i++){
+        clave = (char*)abb_iter_in_ver_actual(iter);
+        if (!clave){
+            todo_bien = false;
+            break;
+        }
+        valor = abb_obtener(abb,clave);
+        if (!valor){
+            todo_bien = false;
+            break;
+        }
+        abb_iter_in_avanzar(iter);
+    }
+    print_test("Prueba ABB se itero correctamente", todo_bien);
+    print_test("Prueba ABB el iterador esta al final", abb_iter_in_al_final(iter));
+    for(size_t i = 0; i < largo; i++){
+        free(claves[i]);
+    }
+    free(claves);
+    abb_iter_in_destruir(iter);
+    abb_destruir(abb);
+
+}
+
 void pruebas_abb_estudiante() {
     pruebas_abb_vacio();
     pruebas_abb_con_null();
@@ -437,6 +515,8 @@ void pruebas_abb_estudiante() {
     prueba_abb_iterador_interno_sin_corte();
     prueba_abb_iter_vacio ();
     prueba_abb_iter_avanzar_ver_actual();
+    prueba_abb_volumen(5000);
+    prueba_abb_iter_volumen(5000);
 }
 
 #ifndef CORRECTOR  // Para que no dé conflicto con el main() del corrector.
