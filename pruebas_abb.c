@@ -464,11 +464,16 @@ static void prueba_abb_volumen(size_t largo){
 
 static void prueba_abb_iter_volumen(size_t largo){
     printf ("\nINICIO DE PRUEBAS DE VOLUMEN CON ITERADOR\n");
+
     abb_t* abb = abb_crear(strcmp, NULL);
     char** claves = malloc(largo * sizeof(char*));
     generar_claves(claves, largo);
     bool todo_bien = true;
+    size_t cant_guardados = 0;
     for(size_t i = 0; i < largo; i++){
+        if (!abb_pertenece (abb,claves[i])){
+            cant_guardados ++;
+        }
         if(!abb_guardar(abb, claves[i], claves[i])){
             todo_bien = false;
         }
@@ -478,7 +483,7 @@ static void prueba_abb_iter_volumen(size_t largo){
     char* clave;
     char* valor;
     todo_bien = true;
-    for(size_t i = 0; i < largo && !abb_iter_in_al_final(iter); i++){
+    for(size_t i = 0; i < cant_guardados; i++){
         clave = (char*)abb_iter_in_ver_actual(iter);
         if (!clave){
             todo_bien = false;
@@ -497,10 +502,10 @@ static void prueba_abb_iter_volumen(size_t largo){
         free(claves[i]);
     }
     free(claves);
-    abb_iter_in_destruir(iter);
     abb_destruir(abb);
-
+    abb_iter_in_destruir(iter);
 }
+
 
 void pruebas_abb_estudiante() {
     pruebas_abb_vacio();
